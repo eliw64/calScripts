@@ -14,7 +14,7 @@ function data_out = calFileLoad(fList, ch)
     for ii = 1 : length(fList);
 
         % Load Data
-        data = load(fList(ii))';
+        data = load(fList{ii})';
 
         % Remove Outliers
         data = data(1:3,2:end-1);
