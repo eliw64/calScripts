@@ -1,5 +1,5 @@
-% CalRVS.m
-% Function for calculating RVS from a series of tone bursts running in
+% CalTVR.m
+% Function for calculating TVR from a series of tone bursts running in
 % 1 khz steps
 %
 % Last modified: Eli Willard
@@ -12,7 +12,7 @@
 % Outputs:
 % RVS - receive voltage sensitivity vector
 
-function RVS = CalRVS(fpath, stdname)
+function TVR = calTVR(fpath, stdname)
 
 % channel setup
 ch.drive = 1; % scope input from function generator
