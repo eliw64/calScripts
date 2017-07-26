@@ -18,15 +18,17 @@ function RVS = CalRVS(fpath, stdname)
 ch.drive = 1; % scope input from function generator
 ch.std = 2; % scope input from standard hydrophone
 ch.phone = 3; % scope input from custom hydrophone
+gain = 1;
+
 
 % Load and clean up data
-files = dir(fullfile(fpath, '*08.mat')); % change '*08.mat' to cal file
-data = calFileLoad(files, ch);
+files = dir(fullfile(fpath, '*.ASC')); % change '*.ASC' to cal file
+data = calFileLoad(fullfile(fpath, {files(:).name}), ch);
 
 % construct time and freq vector
 Fs = 5e6; % sample rate from scope
 dt = 1/Fs;
-N = length(data(ifile));
+N = length(data(1).drive);
 t = 0 : dt : (N-1) * dt; % time vector
 freq = 5 : 25; % tone burst frequency vector [kHz]
 
@@ -35,10 +37,10 @@ M = load(stdname);
 standard.freq = M(:,1)';
 standard.RVS = M(:,2)';
 
-% window setup
+% window setup - need to window steady state portion of signal
 win.type = 'tukeywin';
-win.start = 7138; % start window at this sample
-win.stop = 1.06e4; % stop window at this sample
+win.start = 7237; % start window at this sample
+win.stop = 1.08e4; % stop window at this sample
 win.N = win.stop - win.start + 1; % number of points in window
 trunc = win.start : win.stop;
 mywin = window(win.type, win.N)';
@@ -49,7 +51,7 @@ for jj = 1 : length(data)
     Y = signalAlign([data(jj).std; data(jj).phone]);
     
     % enable to plot aligned signals
-    % figure; plot(Y(1,:)); hold on; plot(Y(2,:))
+%     figure; plot(Y(1,:)); hold on; plot(Y(2,:))
     
     % apply window to standard and custom hydrophone signals
     for kk = 1 : 2
@@ -61,20 +63,21 @@ for jj = 1 : length(data)
     
     
     % calculate rms voltage of custom hydrophone and standard
-    vRms.phone(jj) = max(X(2,:));
-    vRms.standard(jj) = max(X(1,:));
+    vRms.phone(jj) = rms(X(2,:));
+    vRms.standard(jj) = rms(X(1,:));
     
-    stdcal(jj) = interp1(standard.freq, standard.RVS, freq(jj) * 1e3);
+    stdcal(jj) = interp1(standard.freq,standard.RVS, freq(jj) * 1e3,'pchip',NaN);
+    
     RVS(jj) = 20 * log10((gain * vRms.phone(jj)) / vRms.standard(jj)) + stdcal(jj);
 end
 
 % generate plots
 
 figure;
-plot(freq, RVS); hold on; plot(freq, stdcal)
-figure;
-plot(freq, gain.*vRms.phone); hold on; plot(freq, vRms.standard)
-figure; plot(freq,(gain .* vRms.phone) ./ vRms.standard)
+plot(freq, RVS); %hold on; plot(freq, stdcal)
+% figure;
+% plot(freq, gain.*vRms.phone); hold on; plot(freq, vRms.standard)
+% figure; plot(freq,(gain .* vRms.phone) ./ vRms.standard)
 
 
 end
